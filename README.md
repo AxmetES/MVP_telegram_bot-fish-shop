@@ -34,7 +34,7 @@ Declare default environment variables in ```.env``` file:
 
 ## Deploy on Heroku
 Scripts must be specified In Procfile:
-bot-tg: python3 tg_bot.py
+`bot-tg: python3 tg_bot.py`
 Deploy git repository in Heroku server.
 Carry over all variables from .env to Reveal Config Vars in heroku/settings.
 
@@ -45,4 +45,4 @@ In cmd ```python tg_bot.py```.
 You may copy, distribute and modify the software.
 
 ## Motivation
-The code is written for educational purposes - this is a lesson in the Python and web development course at [Devman] (https://dvmn.org).
+The code is written for educational purposes - this is a lesson in the Python and web development course at [Devman](https://dvmn.org).
