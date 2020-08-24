@@ -41,6 +41,9 @@ Carry over all variables from .env to Reveal Config Vars in heroku/settings.
 ## Run.
 In cmd ```python tg_bot.py```.
 
+
+![Alt text](fish_shop.gif)
+
 ## License
 You may copy, distribute and modify the software.
 
