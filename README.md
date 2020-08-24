@@ -24,7 +24,7 @@ Declare default environment variables in ```.env``` file:
 
 -`ACCESS_TOKEN`= elasticpath access token.
     
--`TG_TOKEN=1188223536:` telegram bot access token.
+-`TG_TOKEN`= telegram bot access token.
 
 -`DATABASE_PASSWORD`= redislabs database password.
 
