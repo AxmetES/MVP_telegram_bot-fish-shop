@@ -1,4 +1,4 @@
-##Fish-shop bot
+## Fish-shop bot
 The project `telegram bot` for fish-shop web store. 
 By the bot you can :
 - Choose fish.
@@ -6,7 +6,7 @@ By the bot you can :
 - Delete fish from cart.
 
 All CRUD methods worked by API [documentation.elasticpath](https://documentation.elasticpath.com/commerce-cloud/docs/concepts/index.html)
-##Get start
+## Get start
 Install requirements from ```pip install requirements.txt```.
 
 - Create default environment variables ```.env``` file.
@@ -32,7 +32,7 @@ Declare default environment variables in ```.env``` file:
 
 -`DATABASE_PORT`= redislabs database PORT.
 
-##Deploy on Heroku
+## Deploy on Heroku
 Scripts must be specified In Procfile:
 bot-tg: python3 tg_bot.py
 Deploy git repository in Heroku server.
@@ -41,8 +41,8 @@ Carry over all variables from .env to Reveal Config Vars in heroku/settings.
 ## Run.
 In cmd ```python tg_bot.py```.
 
-##License
+## License
 You may copy, distribute and modify the software.
 
-##Motivation
+## Motivation
 The code is written for educational purposes - this is a lesson in the Python and web development course at [Devman] (https://dvmn.org).
