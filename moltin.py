@@ -1,10 +1,11 @@
 import requests
 from dotenv import load_dotenv
 import os
+from urllib.parse import urljoin
 
 access_token_url = 'https://api.moltin.com/oauth/access_token'
 cart_url = 'https://api.moltin.com/v2/carts/'
-products_url = 'https://api.moltin.com/v2/products'
+products_url = 'https://api.moltin.com/v2/products/'
 operation_cart_url = 'https://api.moltin.com/v2/carts/reference/items'
 file_url = 'https://api.moltin.com/v2/files/'
 delete_item_cart_url = 'https://api.moltin.com/v2/carts/reference/items/'
@@ -12,7 +13,7 @@ customer_url = 'https://api.moltin.com/v2/customers/'
 
 
 def get_cart(cart_url, chat_id, headers):
-    cart_chat_id_url = cart_url + str(chat_id)
+    cart_chat_id_url = urljoin(cart_url, chat_id)
     response = requests.get(cart_chat_id_url, headers=headers)
     response.raise_for_status()
 
@@ -30,8 +31,9 @@ def get_products(products_url, headers):
 
 
 def get_product(products_url, headers, products_id):
-    product_url = products_url + '/' + products_id
-    response = requests.get(product_url, headers=headers)
+    url = urljoin(products_url, products_id)
+    print(url)
+    response = requests.get(url, headers=headers)
     response.raise_for_status()
     return response.json()
 

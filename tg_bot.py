@@ -65,7 +65,7 @@ def handle_menu(bot, update):
 
 def handle_description(bot, update):
     call_back = update.callback_query.data
-    chat_id = update.callback_query.message.chat_id
+    chat_id = str(update.callback_query.message.chat_id)
     _id, name, quantity = call_back.split(',')
     get_cart(cart_url, chat_id, headers)
     payload_cart = {"data": {"id": _id,
