@@ -1,6 +1,5 @@
 import requests
 from dotenv import load_dotenv
-import os
 from urllib.parse import urljoin
 
 access_token_url = 'https://api.moltin.com/oauth/access_token'
@@ -32,7 +31,6 @@ def get_products(products_url, headers):
 
 def get_product(products_url, headers, products_id):
     url = urljoin(products_url, products_id)
-    print(url)
     response = requests.get(url, headers=headers)
     response.raise_for_status()
     return response.json()
@@ -56,28 +54,16 @@ def get_cart_items(cart_url, headers, chat_id):
     return response.json()
 
 
-def get_image_href(file_url, headers, file_id):
-    get_image_url = file_url + file_id
-    response = requests.get(get_image_url, headers=headers)
+def get_image_url(file_url, headers, file_id):
+    image_url = urljoin(file_url, file_id)
+    response = requests.get(image_url, headers=headers)
     response.raise_for_status()
     href = response.json()['data']['link']['href']
     return href
 
 
-def create_file(file_url, headers, data_files):
-    response = requests.post(file_url, headers=headers, files=data_files)
-    response.raise_for_status()
-    return response.json()['data']['id']
-
-
-def band_main_image(image_relationship_url, headers, data_image):
-    response = requests.post(image_relationship_url, headers=headers, json=data_image)
-    response.raise_for_status()
-    return response.json()
-
-
 def get_cart_total(cart_url, headers, chat_id):
-    url = cart_url + str(chat_id)
+    url = urljoin(cart_url, chat_id)
     response = requests.get(url, headers=headers)
     return response.json()
 
@@ -95,13 +81,13 @@ def create_customer(customer_url, headers, customer_data):
 
 
 def get_customer(customer_url, headers, customer_id):
-    url = customer_url + str(customer_id)
+    url = urljoin(customer_url, customer_id)
     response = requests.get(url, headers=headers)
     return response.json()
 
 
 def delete_customer(customer_url, headers, customer_id):
-    url = customer_url + customer_id
+    url = urljoin(customer_url, customer_id)
     response = requests.delete(url, headers=headers)
     return response
 
@@ -113,8 +99,6 @@ def get_all_customers(customer_url, headers):
 
 
 def main():
-    pics_directory = 'pics'
-    os.makedirs(pics_directory, exist_ok=True)
     load_dotenv()
 
 
