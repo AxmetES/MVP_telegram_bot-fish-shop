@@ -1,13 +1,13 @@
-import requests
-from dotenv import load_dotenv
 from urllib.parse import urljoin
 
-access_token_url = 'https://api.moltin.com/oauth/access_token'
+import requests
+
+access_token_url = 'https://api.moltin.com/oauth/access_token/'
 cart_url = 'https://api.moltin.com/v2/carts/'
 products_url = 'https://api.moltin.com/v2/products/'
-operation_cart_url = 'https://api.moltin.com/v2/carts/reference/items'
+operation_cart_url = 'https://api.moltin.com/v2/carts/reference/items/'
 file_url = 'https://api.moltin.com/v2/files/'
-delete_item_cart_url = 'https://api.moltin.com/v2/carts/reference/items/'
+delete_cart_product_url = 'https://api.moltin.com/v2/carts/reference/items/'
 customer_url = 'https://api.moltin.com/v2/customers/'
 
 
@@ -68,8 +68,10 @@ def get_cart_total(cart_url, headers, chat_id):
     return response.json()
 
 
-def delete_item(delete_item_cart_url, headers, chat_id, cart_item):
-    url = replace_url_parameter(delete_item_cart_url, chat_id) + cart_item
+def delete_cart_product(cart_url, headers, chat_id, cart_product):
+    cart_chat_id_url = urljoin(cart_url, chat_id)
+    cart_item_url = urljoin(cart_chat_id_url, 'items/')
+    url = urljoin(cart_item_url, cart_product)
     response = requests.delete(url, headers=headers)
     response.raise_for_status()
 
@@ -96,11 +98,3 @@ def get_all_customers(customer_url, headers):
     response = requests.get(customer_url, headers=headers)
     response.raise_for_status()
     return response.json()
-
-
-def main():
-    load_dotenv()
-
-
-if __name__ == '__main__':
-    main()

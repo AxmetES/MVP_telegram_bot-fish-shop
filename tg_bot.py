@@ -1,11 +1,13 @@
 import os
+import re
+
 import redis
 from dotenv import load_dotenv
 from telegram.ext import Filters, Updater
 from telegram.ext import CallbackQueryHandler, CommandHandler, MessageHandler
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
+
 import moltin
-import re
 
 _database = None
 
@@ -18,10 +20,9 @@ def start(bot, update):
 
     if update.callback_query:
         bot.sendMessage(chat_id=update.callback_query.message.chat_id, text='Please choose:', reply_markup=reply_markup)
+
     elif update.message:
         update.message.reply_text('Please choose:', reply_markup=reply_markup)
-    if update.callback_query:
-        bot.delete_message(update.callback_query.message.chat_id, update.callback_query.message.message_id)
 
     return "HANDLE_MENU"
 
@@ -30,17 +31,17 @@ def handle_menu(bot, update):
     callback_query = update.callback_query
     product = moltin.get_product(moltin.products_url, headers, callback_query.data)['data']
     main_image_id = product['relationships']['main_image']['data']['id']
-    image_href = moltin.get_image_url(moltin.file_url, headers, main_image_id)
-    kilograms = [1, 5, 10]
+    image_url = moltin.get_image_url(moltin.file_url, headers, main_image_id)
+    amount_buttons = [1, 5, 10]
     menu_btn = [
-        [InlineKeyboardButton(f'{kilo} kg', callback_data=f"{product['id']},{product['name']},{kilo}") for kilo in
-         kilograms],
+        [InlineKeyboardButton(f'{amount} kg', callback_data=f"{product['id']},{product['name']},{amount}") for amount in
+         amount_buttons],
         [InlineKeyboardButton("go to cart", callback_data='to_сart'),
          InlineKeyboardButton("back to menu", callback_data='/start')]
     ]
     reply_markup = InlineKeyboardMarkup(menu_btn)
 
-    bot.send_photo(chat_id=update.callback_query.message.chat_id, photo=image_href,
+    bot.send_photo(chat_id=update.callback_query.message.chat_id, photo=image_url,
                    caption=f"{product['name']}\n\n{product['meta']['display_price']['with_tax']['formatted']} per kg\n"
                            f"{product['meta']['display_price']['with_tax']['amount']}kg on stock\n\n"
                            f"{product['description']}", reply_markup=reply_markup)
@@ -52,11 +53,11 @@ def handle_menu(bot, update):
 
 
 def handle_description(bot, update):
-    call_back = update.callback_query.data
+    callback = update.callback_query.data
     chat_id = str(update.callback_query.message.chat_id)
-    _id, name, quantity = call_back.split(',')
+    product_id, name, quantity = callback.split(',')
     moltin.get_cart(moltin.cart_url, chat_id, headers)
-    payload_cart = {"data": {"id": _id,
+    payload_cart = {"data": {"id": product_id,
                              "type": "cart_item",
                              "quantity": int(quantity)}}
     headers.update({'Content-Type': 'application/json'})
@@ -70,16 +71,17 @@ def handle_description(bot, update):
 def handle_cart(bot, update):
     items_message = "Cart is empty."
     callback_query = update.callback_query
-    chat_id = str(callback_query.message.chat_id)
+    chat_id = str(callback_query.message.chat_id) + '/'
 
-    if 'delete' in update.callback_query.data:
-        product_name, deleted_product_id = get_product_name_and_cart_item(update.callback_query.data)
-        moltin.delete_item(moltin.delete_item_cart_url, headers, chat_id=chat_id, cart_item=deleted_product_id)
+    if '|||' in update.callback_query.data:
+        product_name, product_id = update.callback_query.data.split('|||')
+        product_id = product_id.strip()
+
+        moltin.delete_cart_product(moltin.cart_url, headers, chat_id, product_id)
         bot.answer_callback_query(callback_query_id=update.callback_query.id, text=f"{product_name} was deleted.",
                                   show_alert=False)
 
-    cart_products = moltin.get_cart_items(moltin.operation_cart_url, headers,
-                                          chat_id=chat_id)
+    cart_products = moltin.get_cart_items(moltin.operation_cart_url, headers, chat_id)
     message = []
     for product in cart_products['data']:
         message.append(product['name'])
@@ -95,7 +97,7 @@ def handle_cart(bot, update):
     menu_btn = []
     for product in cart_products['data']:
         menu_btn.append([InlineKeyboardButton(f"remove from cart {product['name']}",
-                                              callback_data=f"{product['name'], product['id']}, delete")])
+                                              callback_data=f"{product['name']}|||{product['id']}")])
 
     menu_btn.append([InlineKeyboardButton(f"payment", callback_data="to_payment")])
     menu_btn.append([InlineKeyboardButton(f"back to menu", callback_data="/start")])
@@ -104,26 +106,18 @@ def handle_cart(bot, update):
     bot.sendMessage(chat_id=update.callback_query.message.chat_id, text=f'{items_message}\nTotal: {total_cost}',
                     reply_markup=reply_markup)
 
-    bot.delete_message(chat_id=callback_query.message.chat_id,
-                       message_id=callback_query.message.message_id)
+    bot.delete_message(chat_id=callback_query.message.chat_id, message_id=callback_query.message.message_id)
 
     return 'HANDLE_CART'
 
 
-def get_product_name_and_cart_item(callback_query_data):
-    text = re.sub('''[)'("]''', '', callback_query_data)
-    product_name, cart_product_id, signal = text.split(',')
-    return product_name.strip(), cart_product_id.strip()
-
-
 def send_email(bot, update):
-    callback_data = update.callback_query.data
-
-    if callback_data == 'to_payment':
+    if update.callback_query.data == 'to_payment':
         bot.sendMessage(chat_id=update.callback_query.message.chat_id, text='please send your email address!')
 
     bot.delete_message(chat_id=update.callback_query.message.chat_id,
                        message_id=update.callback_query.message.message_id)
+
     return 'WAITING_EMAIL'
 
 
@@ -138,6 +132,7 @@ def waiting_email(bot, update):
         'name': user_name,
         'email': email,
     }}
+
     try:
         customer_id = str(db.get(email).decode('utf-8'))
     except AttributeError:
@@ -148,7 +143,9 @@ def waiting_email(bot, update):
         customer_id = moltin.create_customer(moltin.customer_url, headers, customer_data)['data']['id']
         db.set(email, customer_id)
 
-    update.message.reply_text(f"you send me that email address? : {users_email}")
+    update.message.reply_text(f"do you send me that email address? : {users_email}")
+
+    bot.delete_message(update.message.chat_id, update.message.message_id)
 
     return 'WAITING_EMAIL'
 
@@ -216,6 +213,5 @@ if __name__ == '__main__':
     dispatcher = updater.dispatcher
     dispatcher.add_handler(CallbackQueryHandler(handle_users_reply))
     dispatcher.add_handler(MessageHandler(Filters.text, handle_users_reply))
-    dispatcher.add_handler(MessageHandler(Filters.text, waiting_email))
     dispatcher.add_handler(CommandHandler('start', handle_users_reply))
     updater.start_polling()
