@@ -36,19 +36,14 @@ def get_product(products_url, headers, products_id):
     return response.json()
 
 
-def replace_url_parameter(url, chat_id):
-    chat_id_url = url.replace('reference', str(chat_id))
-    return chat_id_url
-
-
-def add_product_to_cart(cart_url, headers, payload_cart, chat_id):
-    url = replace_url_parameter(cart_url, chat_id)
+def add_product_to_cart(headers, payload_cart, chat_id):
+    url = f'https://api.moltin.com/v2/carts/{chat_id}/items/'
     response = requests.post(url, headers=headers, json=payload_cart)
     response.raise_for_status()
 
 
-def get_cart_items(cart_url, headers, chat_id):
-    url = replace_url_parameter(cart_url, chat_id)
+def get_cart_items(headers, chat_id):
+    url = f'https://api.moltin.com/v2/carts/{chat_id}/items/'
     response = requests.get(url, headers=headers)
     response.raise_for_status()
     return response.json()

@@ -20,48 +20,52 @@ def start(bot, update):
 
     if update.callback_query:
         bot.sendMessage(chat_id=update.callback_query.message.chat_id, text='Please choose:', reply_markup=reply_markup)
+        bot.delete_message(chat_id=update.callback_query.message.chat_id,
+                           message_id=update.callback_query.message.message_id)
 
     elif update.message:
         update.message.reply_text('Please choose:', reply_markup=reply_markup)
+        bot.delete_message(chat_id=update.message.chat_id,
+                           message_id=update.message.message_id)
 
     return "HANDLE_MENU"
 
 
 def handle_menu(bot, update):
-    callback_query = update.callback_query
-    product = moltin.get_product(moltin.products_url, headers, callback_query.data)['data']
+    product_id = update.callback_query.data
+    product = moltin.get_product(moltin.products_url, headers, product_id)['data']
     main_image_id = product['relationships']['main_image']['data']['id']
     image_url = moltin.get_image_url(moltin.file_url, headers, main_image_id)
     amount_buttons = [1, 5, 10]
-    menu_btn = [
+    menu = [
         [InlineKeyboardButton(f'{amount} kg', callback_data=f"{product['id']},{product['name']},{amount}") for amount in
          amount_buttons],
         [InlineKeyboardButton("go to cart", callback_data='to_сart'),
          InlineKeyboardButton("back to menu", callback_data='/start')]
     ]
-    reply_markup = InlineKeyboardMarkup(menu_btn)
+    reply_markup = InlineKeyboardMarkup(menu)
 
     bot.send_photo(chat_id=update.callback_query.message.chat_id, photo=image_url,
                    caption=f"{product['name']}\n\n{product['meta']['display_price']['with_tax']['formatted']} per kg\n"
                            f"{product['meta']['display_price']['with_tax']['amount']}kg on stock\n\n"
                            f"{product['description']}", reply_markup=reply_markup)
 
-    bot.delete_message(chat_id=callback_query.message.chat_id,
-                       message_id=callback_query.message.message_id)
+    bot.delete_message(chat_id=update.callback_query.message.chat_id,
+                       message_id=update.callback_query.message.message_id)
 
     return "HANDLE_DESCRIPTION"
 
 
 def handle_description(bot, update):
-    callback = update.callback_query.data
+    product = update.callback_query.data
     chat_id = str(update.callback_query.message.chat_id)
-    product_id, name, quantity = callback.split(',')
+    product_id, name, quantity = product.split(',')
     moltin.get_cart(moltin.cart_url, chat_id, headers)
     payload_cart = {"data": {"id": product_id,
                              "type": "cart_item",
                              "quantity": int(quantity)}}
     headers.update({'Content-Type': 'application/json'})
-    moltin.add_product_to_cart(moltin.operation_cart_url, headers, payload_cart, chat_id)
+    moltin.add_product_to_cart(headers, payload_cart, chat_id)
     bot.answer_callback_query(callback_query_id=update.callback_query.id, text=f"product was added to cart.",
                               show_alert=False)
 
@@ -70,8 +74,7 @@ def handle_description(bot, update):
 
 def handle_cart(bot, update):
     items_message = "Cart is empty."
-    callback_query = update.callback_query
-    chat_id = str(callback_query.message.chat_id) + '/'
+    chat_id = str(update.callback_query.message.chat_id) + '/'
 
     if '|||' in update.callback_query.data:
         product_name, product_id = update.callback_query.data.split('|||')
@@ -81,7 +84,7 @@ def handle_cart(bot, update):
         bot.answer_callback_query(callback_query_id=update.callback_query.id, text=f"{product_name} was deleted.",
                                   show_alert=False)
 
-    cart_products = moltin.get_cart_items(moltin.operation_cart_url, headers, chat_id)
+    cart_products = moltin.get_cart_items(headers, chat_id)
     message = []
     for product in cart_products['data']:
         message.append(product['name'])
@@ -94,19 +97,20 @@ def handle_cart(bot, update):
     total = moltin.get_cart_total(moltin.cart_url, headers, chat_id=chat_id)
     total_cost = total['data']['meta']['display_price']['without_tax']['formatted']
 
-    menu_btn = []
+    menu = []
     for product in cart_products['data']:
-        menu_btn.append([InlineKeyboardButton(f"remove from cart {product['name']}",
-                                              callback_data=f"{product['name']}|||{product['id']}")])
+        menu.append([InlineKeyboardButton(f"remove from cart {product['name']}",
+                                          callback_data=f"{product['name']}|||{product['id']}")])
 
-    menu_btn.append([InlineKeyboardButton(f"payment", callback_data="to_payment")])
-    menu_btn.append([InlineKeyboardButton(f"back to menu", callback_data="/start")])
-    reply_markup = InlineKeyboardMarkup(menu_btn)
+    menu.append([InlineKeyboardButton(f"payment", callback_data="to_payment")])
+    menu.append([InlineKeyboardButton(f"back to menu", callback_data="/start")])
+    reply_markup = InlineKeyboardMarkup(menu)
 
     bot.sendMessage(chat_id=update.callback_query.message.chat_id, text=f'{items_message}\nTotal: {total_cost}',
                     reply_markup=reply_markup)
 
-    bot.delete_message(chat_id=callback_query.message.chat_id, message_id=callback_query.message.message_id)
+    bot.delete_message(chat_id=update.callback_query.message.chat_id,
+                       message_id=update.callback_query.message.message_id)
 
     return 'HANDLE_CART'
 

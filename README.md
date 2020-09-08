@@ -17,19 +17,12 @@ Install requirements from ```pip install requirements.txt```.
 Declare default environment variables in ```.env``` file:
 
 - `STORE_ID`= elasticpath store ID.
-
 - `CLIENT_ID`= elasticpath client ID.
-
 - `CLIENT_SECRET`= elasticpath client secret.
-
 - `ACCESS_TOKEN`= elasticpath access token.
-    
 - `TG_TOKEN`= telegram bot access token.
-
 - `DATABASE_PASSWORD`= redislabs database password.
-
 - `DATABASE_HOST`= redislabs database HOST.
-
 - `DATABASE_PORT`= redislabs database PORT.
 
 ## Deploy on Heroku
