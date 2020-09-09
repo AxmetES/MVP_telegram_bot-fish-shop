@@ -6,7 +6,7 @@ By the bot you can :
 - Delete fish from cart.
 
 All CRUD methods worked by API [documentation.elasticpath](https://documentation.elasticpath.com/commerce-cloud/docs/concepts/index.html)
-## Get start
+## Get started
 Install requirements from ```pip install requirements.txt```.
 
 - Create default environment variables ```.env``` file.
